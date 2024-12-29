@@ -22,14 +22,30 @@ struct ContentView: View {
                             .font(.title2)
                             .padding()
                     } else {
-                        if let firstData = animatedData.first {
-                            Text("Flow-Volume Graph starts at Volume: \(firstData.volume), Flow: \(firstData.flow)")
-                                .font(.headline)
-                                .foregroundColor(.blue)
+                        if let lastData = animatedData.last {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Flow-Volume Graph Current:")
+                                    .font(.headline)
+                                    .foregroundColor(.blue)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Volume: \(lastData.volume)")
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Flow: \(lastData.flow)")
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                            Text("Volume-Time Graph starts at Time: \(firstData.time), Volume: \(firstData.volume)")
-                                .font(.headline)
-                                .foregroundColor(.red)
+                                Text("Volume-Time Graph Current:")
+                                    .font(.headline)
+                                    .foregroundColor(.red)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Time: \(lastData.time)")
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Volume: \(lastData.volume)")
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
                         }
 
                         Text("Flow-Volume Graph")
@@ -118,7 +134,7 @@ struct ContentView: View {
     func animateGraphDrawing() {
         animatedData = []
         for (index, point) in data.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.005) { // Faster animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) { // Faster animation
                 animatedData.append(point)
             }
         }
