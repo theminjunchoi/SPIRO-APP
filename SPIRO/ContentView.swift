@@ -21,6 +21,16 @@ struct ContentView: View {
                             .font(.title2)
                             .padding()
                     } else {
+                        if let firstData = data.first {
+                            Text("Flow-Volume Graph starts at Volume: \(firstData.volume), Flow: \(firstData.flow)")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+
+                            Text("Volume-Time Graph starts at Time: \(firstData.time), Volume: \(firstData.volume)")
+                                .font(.headline)
+                                .foregroundColor(.red)
+                        }
+
                         Text("Flow-Volume Graph")
                             .font(.title)
 
@@ -74,7 +84,7 @@ struct ContentView: View {
             let worksheet = try file.parseWorksheet(at: sheetName)
             var parsedData: [GraphData] = []
 
-            for row in worksheet.data?.rows ?? [] {
+            for row in worksheet.data?.rows.dropFirst(1) ?? [] { // Start reading from the second row
                 if let timeString = row.cells[safe: 3]?.value,
                    let volumeString = row.cells[safe: 4]?.value,
                    let flowString = row.cells[safe: 5]?.value,
