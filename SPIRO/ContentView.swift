@@ -14,8 +14,8 @@ struct ContentView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack {
+            ScrollView(.vertical) {
+                VStack(spacing: 20) {
                     if data.isEmpty {
                         Text("Loading data...")
                             .font(.title2)
@@ -93,7 +93,6 @@ struct ContentView: View {
         }
     }
 }
-
 
 private extension Array {
     subscript(safe index: Int) -> Element? {
