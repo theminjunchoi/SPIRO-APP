@@ -11,17 +11,18 @@ struct GraphData: Identifiable {
 
 struct ContentView: View {
     @State private var data: [GraphData] = []
+    @State private var animatedData: [GraphData] = []
 
     var body: some View {
         NavigationView {
             ScrollView(.vertical) {
                 VStack(spacing: 20) {
-                    if data.isEmpty {
+                    if animatedData.isEmpty {
                         Text("Loading data...")
                             .font(.title2)
                             .padding()
                     } else {
-                        if let firstData = data.first {
+                        if let firstData = animatedData.first {
                             Text("Flow-Volume Graph starts at Volume: \(firstData.volume), Flow: \(firstData.flow)")
                                 .font(.headline)
                                 .foregroundColor(.blue)
@@ -34,7 +35,7 @@ struct ContentView: View {
                         Text("Flow-Volume Graph")
                             .font(.title)
 
-                        Chart(data) {
+                        Chart(animatedData) {
                             LineMark(
                                 x: .value("Volume", $0.volume),
                                 y: .value("Flow", $0.flow)
@@ -42,12 +43,14 @@ struct ContentView: View {
                             .interpolationMethod(.catmullRom)
                             .symbol(Circle())
                         }
+                        .chartXScale(domain: 0...4)
+                        .chartYScale(domain: -5...10)
                         .frame(height: 300)
 
                         Text("Volume-Time Graph")
                             .font(.title)
 
-                        Chart(data) {
+                        Chart(animatedData) {
                             LineMark(
                                 x: .value("Time", $0.time),
                                 y: .value("Volume", $0.volume)
@@ -55,51 +58,69 @@ struct ContentView: View {
                             .interpolationMethod(.catmullRom)
                             .symbol(Circle())
                         }
+                        .chartXScale(domain: 0...15000)
+                        .chartYScale(domain: 0...4)
                         .frame(height: 300)
                     }
                 }
                 .padding()
             }
             .navigationTitle("Spirometry Graphs")
-            .onAppear(perform: loadExcelData)
+            .onAppear {
+                loadExcelData {
+                    animateGraphDrawing()
+                }
+            }
         }
     }
 
-    func loadExcelData() {
+    func loadExcelData(completion: @escaping () -> Void) {
         guard let fileURL = Bundle.main.url(forResource: "spiro_dataset", withExtension: "xlsx") else {
             print("File not found")
             return
         }
 
-        do {
-            guard let file = XLSXFile(filepath: fileURL.path) else {
-                print("Failed to initialize XLSXFile")
-                return
-            }
-            guard let sheetName = try file.parseWorksheetPaths().first else {
-                print("No sheets found")
-                return
-            }
-
-            let worksheet = try file.parseWorksheet(at: sheetName)
-            var parsedData: [GraphData] = []
-
-            for row in worksheet.data?.rows.dropFirst(1) ?? [] { // Start reading from the second row
-                if let timeString = row.cells[safe: 3]?.value,
-                   let volumeString = row.cells[safe: 4]?.value,
-                   let flowString = row.cells[safe: 5]?.value,
-                   let time = Double(timeString),
-                   let volume = Double(volumeString),
-                   let flow = Double(flowString) {
-                    parsedData.append(GraphData(time: time, volume: volume, flow: flow))
+        DispatchQueue.global(qos: .background).async {
+            do {
+                guard let file = XLSXFile(filepath: fileURL.path) else {
+                    print("Failed to initialize XLSXFile")
+                    return
                 }
-            }
+                guard let sheetName = try file.parseWorksheetPaths().first else {
+                    print("No sheets found")
+                    return
+                }
 
-            DispatchQueue.main.async {
-                self.data = parsedData
+                let worksheet = try file.parseWorksheet(at: sheetName)
+                var parsedData: [GraphData] = []
+
+                for row in worksheet.data?.rows.dropFirst(1) ?? [] { // Start reading from the second row
+                    if let timeString = row.cells[safe: 3]?.value,
+                       let volumeString = row.cells[safe: 4]?.value,
+                       let flowString = row.cells[safe: 5]?.value,
+                       let time = Double(timeString),
+                       let volume = Double(volumeString),
+                       let flow = Double(flowString) {
+                        parsedData.append(GraphData(time: time, volume: volume, flow: flow))
+                    }
+                }
+
+                DispatchQueue.main.async {
+                    self.data = parsedData
+                    completion()
+                }
+            } catch {
+                print("Failed to parse Excel file: \(error)")
             }
-        } catch {
-            print("Failed to parse Excel file: \(error)")
+        }
+    }
+
+    func animateGraphDrawing() {
+        animatedData = []
+        for (index, point) in data.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.005) { // Faster animation
+                animatedData.append(point)
+            }
         }
     }
 }
