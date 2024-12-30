@@ -1,6 +1,4 @@
 import SwiftUI
-import Charts
-import CoreXLSX
 
 struct EmptyView: View {
     var body: some View {
