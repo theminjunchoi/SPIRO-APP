@@ -4,9 +4,10 @@ import Charts
 
 struct MagneticGraphView: View {
     @State private var magnetometerData: [(time: Double, x: Double, y: Double, z: Double)] = []
+    @State private var frequencyData: [(time: Double, frequency: Double)] = []
     @State private var timer: Timer?
     private let motionManager = CMMotionManager()
-    private let startTime = Date()
+    @State private var startTime = Date()
 
     var body: some View {
         VStack {
@@ -15,29 +16,52 @@ struct MagneticGraphView: View {
                     .font(.title2)
                     .padding()
             } else {
+                VStack {
+                    Text("Frequency Data")
+                        .font(.headline)
+
+                    Chart(frequencyData, id: \.time) {
+                        LineMark(
+                            x: .value("Time (s)", $0.time),
+                            y: .value("Frequency (Hz)", $0.frequency)
+                        )
+                        .foregroundStyle(.purple)
+                    }
+                    .chartXAxisLabel(position: .bottom) {
+                        Text("Time (s)")
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                    }
+                    .chartYAxisLabel(position: .leading) {
+                        Text("Frequency (Hz)")
+                            .font(.caption)
+                            .foregroundColor(.primary)
+                    }
+                    .frame(height: 200)
+                    .padding()
+                }
+
                 Text("Magnetometer Data")
                     .font(.headline)
 
-                Chart {
-                    ForEach(magnetometerData, id: \.time) { data in
-                        LineMark(
-                            x: .value("Time (s)", data.time),
-                            y: .value("X Axis (µT)", data.x)
-                        )
-                        .foregroundStyle(.red)
+                Chart(magnetometerData, id: \.time) {
+                    LineMark(
+                        x: .value("Time (s)", $0.time),
+                        y: .value("X Axis (µT)", $0.x)
+                    )
+                    .foregroundStyle(.red)
 
-                        LineMark(
-                            x: .value("Time (s)", data.time),
-                            y: .value("Y Axis (µT)", data.y)
-                        )
-                        .foregroundStyle(.green)
+                    LineMark(
+                        x: .value("Time (s)", $0.time),
+                        y: .value("Y Axis (µT)", $0.y)
+                    )
+                    .foregroundStyle(.green)
 
-                        LineMark(
-                            x: .value("Time (s)", data.time),
-                            y: .value("Z Axis (µT)", data.z)
-                        )
-                        .foregroundStyle(.blue)
-                    }
+                    LineMark(
+                        x: .value("Time (s)", $0.time),
+                        y: .value("Z Axis (µT)", $0.z)
+                    )
+                    .foregroundStyle(.blue)
                 }
                 .chartXAxisLabel(position: .bottom) {
                     Text("Time (s)")
@@ -54,7 +78,10 @@ struct MagneticGraphView: View {
             }
         }
         .navigationTitle("Magnetometer Graph")
-        .onAppear(perform: startMagnetometerUpdates)
+        .onAppear {
+            startTime = Date()
+            startMagnetometerUpdates()
+        }
         .onDisappear(perform: stopMagnetometerUpdates)
     }
 
@@ -78,8 +105,16 @@ struct MagneticGraphView: View {
 
             magnetometerData.append((time: elapsedTime, x: x, y: y, z: z))
 
+            // Simulate frequency data based on Z-axis (for demonstration purposes)
+            let frequency = abs(z) * 0.1 // Replace this with actual frequency calculation
+            frequencyData.append((time: elapsedTime, frequency: frequency))
+
             if magnetometerData.count > 100 {
                 magnetometerData.removeFirst()
+            }
+
+            if frequencyData.count > 100 {
+                frequencyData.removeFirst()
             }
         }
     }
