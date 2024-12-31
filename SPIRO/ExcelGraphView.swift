@@ -12,10 +12,12 @@ struct ExcelGraphData: Identifiable {
 struct ExcelGraphView: View {
     @State private var data: [ExcelGraphData] = []
     @State private var animatedData: [ExcelGraphData] = []
+    @State private var fvcValue: Double? = nil
+    @State private var fev1Value: Double? = nil
 
     var body: some View {
         ScrollView(.vertical) {
-            VStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 20) {
                 if animatedData.isEmpty {
                     Text("Loading data...")
                         .font(.title2)
@@ -26,25 +28,33 @@ struct ExcelGraphView: View {
                             Text("Flow-Volume Graph Current:")
                                 .font(.headline)
                                 .foregroundColor(.blue)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                             Text("Volume: \(lastData.volume)")
                                 .font(.body)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                             Text("Flow: \(lastData.flow)")
                                 .font(.body)
-                                .frame(maxWidth: .infinity, alignment: .leading)
 
                             Text("Volume-Time Graph Current:")
                                 .font(.headline)
                                 .foregroundColor(.red)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                             Text("Time: \(lastData.time)")
                                 .font(.body)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                             Text("Volume: \(lastData.volume)")
                                 .font(.body)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                    }
+
+                    if let fvc = fvcValue {
+                        Text("FVC Value: \(String(format: "%.2f", fvc)) L")
+                            .font(.title3)
+                            .foregroundColor(.green)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    if let fev1 = fev1Value {
+                        Text("FEV1 Value: \(String(format: "%.2f", fev1)) L")
+                            .font(.title3)
+                            .foregroundColor(.green)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
                     Text("Flow-Volume Graph")
@@ -60,6 +70,8 @@ struct ExcelGraphView: View {
                     }
                     .chartXScale(domain: 0...4)
                     .chartYScale(domain: -5...10)
+                    .chartXAxisLabel("Volume")
+                    .chartYAxisLabel("Flow")
                     .frame(height: 300)
 
                     Text("Volume-Time Graph")
@@ -75,6 +87,8 @@ struct ExcelGraphView: View {
                     }
                     .chartXScale(domain: 0...15000)
                     .chartYScale(domain: 0...4)
+                    .chartXAxisLabel("Time")
+                    .chartYAxisLabel("Volume")
                     .frame(height: 300)
                 }
             }
@@ -82,6 +96,7 @@ struct ExcelGraphView: View {
         }
         .onAppear {
             loadExcelData {
+                calculateFVCandFEV1()
                 animateGraphDrawing()
             }
         }
@@ -126,6 +141,16 @@ struct ExcelGraphView: View {
             } catch {
                 print("Failed to parse Excel file: \(error)")
             }
+        }
+    }
+
+    func calculateFVCandFEV1() {
+        // Calculate the maximum volume value as FVC
+        fvcValue = data.map { $0.volume }.max()
+
+        // Calculate FEV1 (Volume at 1 second)
+        if let fev1Data = data.first(where: { $0.time >= 1.0 }) {
+            fev1Value = fev1Data.volume
         }
     }
 
