@@ -14,6 +14,8 @@ struct ExcelGraphView: View {
     @State private var animatedData: [ExcelGraphData] = []
     @State private var fvcValue: Double? = nil
     @State private var fev1Value: Double? = nil
+    @State private var evValue: Double? = nil
+    @State private var newTimeZero: Double? = nil
 
     var body: some View {
         ScrollView(.vertical) {
@@ -44,14 +46,28 @@ struct ExcelGraphView: View {
                     }
 
                     if let fvc = fvcValue {
-                        Text("FVC Value: \(String(format: "%.2f", fvc)) L")
+                        Text("FVC Value: \(fvc) L")
                             .font(.title3)
                             .foregroundColor(.green)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
                     if let fev1 = fev1Value {
-                        Text("FEV1 Value: \(String(format: "%.2f", fev1)) L")
+                        Text("FEV1 Value: \(fev1) L")
+                            .font(.title3)
+                            .foregroundColor(.green)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    if let ev = evValue {
+                        Text("Extrapolated Volume (EV): \(ev) L")
+                            .font(.title3)
+                            .foregroundColor(.green)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+
+                    if let timeZero = newTimeZero {
+                        Text("New Time Zero: \(timeZero) s")
                             .font(.title3)
                             .foregroundColor(.green)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -96,7 +112,7 @@ struct ExcelGraphView: View {
         }
         .onAppear {
             loadExcelData {
-                calculateFVCandFEV1()
+                calculateFVCFEV1EVAndTimeZero()
                 animateGraphDrawing()
             }
         }
@@ -144,7 +160,7 @@ struct ExcelGraphView: View {
         }
     }
 
-    func calculateFVCandFEV1() {
+    func calculateFVCFEV1EVAndTimeZero() {
         // Calculate the maximum volume value as FVC
         fvcValue = data.map { $0.volume }.max()
 
@@ -152,6 +168,48 @@ struct ExcelGraphView: View {
         if let fev1Data = data.first(where: { $0.time >= 1.0 }) {
             fev1Value = fev1Data.volume
         }
+
+        // Calculate New Time Zero and EV using max slope point
+        if let maxSlopePoint = findMaxSlopePoint() {
+            let slope = maxSlopePoint.slope
+            let intercept = maxSlopePoint.intercept
+
+            newTimeZero = -intercept / slope
+
+            if let newTimeZero = newTimeZero {
+                evValue = interpolateY(at: newTimeZero)
+            }
+        }
+    }
+
+    func interpolateY(at x: Double) -> Double? {
+        guard let lower = data.last(where: { $0.time <= x }),
+              let upper = data.first(where: { $0.time > x }),
+              lower.time != upper.time else {
+            return nil
+        }
+
+        let slope = (upper.volume - lower.volume) / (upper.time - lower.time)
+        return lower.volume + slope * (x - lower.time)
+    }
+
+    func findMaxSlopePoint() -> (slope: Double, intercept: Double)? {
+        guard data.count > 1 else { return nil }
+        var maxSlope = Double.leastNormalMagnitude
+        var bestPoint: (slope: Double, intercept: Double)? = nil
+
+        for i in 0..<(data.count - 1) {
+            let p1 = data[i]
+            let p2 = data[i + 1]
+            let slope = (p2.volume - p1.volume) / (p2.time - p1.time)
+            if slope > maxSlope {
+                maxSlope = slope
+                let intercept = p1.volume - slope * p1.time
+                bestPoint = (slope, intercept)
+            }
+        }
+
+        return bestPoint
     }
 
     func animateGraphDrawing() {
