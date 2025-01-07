@@ -4,6 +4,7 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
+                
                 NavigationLink(destination: ExcelGraphView()) {
                     Text("Graphs with xlsx")
                         .font(.title2)
