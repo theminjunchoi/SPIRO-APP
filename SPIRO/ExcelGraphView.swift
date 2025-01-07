@@ -18,6 +18,9 @@ struct ExcelGraphView: View {
     @State private var newTimeZero: Double? = nil
     @State private var isEvLessThanThreshold: Bool = false // Track if EV is less than threshold
     @State private var fvc5PercentValue: Double? = nil // Store the 5% of FVC value
+    @State private var highestFlowTimeAfterNewTimeZero: Double? = nil // newTimeZero 이후 가장 큰 flow를 가진 시간
+    @State private var highestFlowTimeDifference: Double? = nil // 최고호기기류도달 시간과 newTimeZero의 차이
+    @State private var isFlowTimeExceedsThreshold: Bool = false // 최고호기기류속도 도달 시간이 120ms 초과 여부
 
     var body: some View {
         ScrollView(.vertical) {
@@ -36,7 +39,9 @@ struct ExcelGraphView: View {
                                 .font(.body)
                             Text("Flow: \(lastData.flow)")
                                 .font(.body)
-
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 10) {
                             Text("Volume-Time Graph Current:")
                                 .font(.headline)
                                 .foregroundColor(.red)
@@ -47,49 +52,22 @@ struct ExcelGraphView: View {
                         }
                     }
 
-                    if let fvc = fvcValue {
-                        Text("FVC Value: \(fvc) L")
-                            .font(.title3)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("주요 수치")
+                            .font(.headline)
                             .foregroundColor(.green)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    if let fev1 = fev1Value {
-                        Text("FEV1 Value: \(fev1) L")
-                            .font(.title3)
-                            .foregroundColor(.green)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    if let ev = evValue {
-                        Text("Extrapolated Volume (EV): \(ev) L")
-                            .font(.title3)
-                            .foregroundColor(.green)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    if let timeZero = newTimeZero {
-                        Text("New Time Zero: \(timeZero) s")
-                            .font(.title3)
-                            .foregroundColor(.green)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
-                    // Show FVC 5% value
-                    if let fvc5Percent = fvc5PercentValue {
-                        Text("5% of FVC Value: \(fvc5Percent) L")
-                            .font(.title3)
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        if let fvc = fvcValue {
+                            Text("FVC Value: \(fvc) L")
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        if let fev1 = fev1Value {
+                            Text("FEV1 Value: \(fev1) L")
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                     
-                    // Show if EV is less than the threshold
-                    if isEvLessThanThreshold {
-                        Text("EV is less than the threshold \n(max(FVC 5%, 150 mL)")
-                            .font(.title3)
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
 
                     Text("Flow-Volume Graph")
                         .font(.title)
@@ -124,6 +102,77 @@ struct ExcelGraphView: View {
                     .chartXAxisLabel("Time")
                     .chartYAxisLabel("Volume")
                     .frame(height: 300)
+                    
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("검사 시작 적합 판정")
+                            .font(.title2)
+                        
+                        if let ev = evValue {
+                            Text("Extrapolated Volume (EV): \(ev) L")
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        if let timeZero = newTimeZero {
+                            Text("New Time Zero: \(timeZero) ms")
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // Show FVC 5% value
+                        if let fvc5Percent = fvc5PercentValue {
+                            Text("5% of FVC Value: \(fvc5Percent) L")
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        
+                        // Show if EV is less than the threshold
+                        if isEvLessThanThreshold {
+                            Text("EV값이 threshold(max(FVC 5%, 150 mL)) 보다 작습니다.")
+                                .font(.body)
+                                .foregroundColor(.green) // Green text
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            Text("EV값이 threshold(max(FVC 5%, 150 mL))를 초과했습니다.")
+                                .font(.body)
+                                .foregroundColor(.red) // Red text
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("검사 중 적합 판정")
+                            .font(.title2)
+
+                        // Display the highest flow time after newTimeZero
+                        if let highestFlowTimeAfterNewTimeZero = highestFlowTimeAfterNewTimeZero {
+                            Text("최고호기기류속도 도달 시점: \(highestFlowTimeAfterNewTimeZero) ms")
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // Display the time difference from newTimeZero
+                        if let highestFlowTimeDifference = highestFlowTimeDifference {
+                            Text("최고호기기류속도 도달 시간: \(highestFlowTimeDifference) ms") // Already in ms
+                                .font(.body)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+
+                        // Show if the highest flow time difference exceeds 120ms
+                        if isFlowTimeExceedsThreshold {
+                            Text("최고호기기류속도 도달 시간이 120ms를 초과합니다.")
+                                .font(.body)
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            Text("최고호기기류속도 도달 시간이 120ms를 초과하지 않습니다.")
+                                .font(.body)
+                                .foregroundColor(.green)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    
                 }
             }
             .padding()
@@ -204,10 +253,26 @@ struct ExcelGraphView: View {
             fvc5PercentValue = fvc * 0.05
         }
 
+        // Calculate the threshold (max of FVC 5% or 150mL)
+        let threshold = max(fvc5PercentValue ?? 0.0, 0.150)
+
         // Check if EV is less than the threshold (5% of FVC or 150mL)
-        if let fvc = fvcValue, let ev = evValue {
-            let threshold = max(fvc * 0.05, 0.150) // 5% of FVC or 150mL
+        if let ev = evValue {
             isEvLessThanThreshold = ev < threshold
+        }
+
+        // Find the highest flow after newTimeZero
+        if let newTimeZero = newTimeZero {
+            if let highestFlowData = data.filter({ $0.time > newTimeZero }).max(by: { $0.flow < $1.flow }) {
+                highestFlowTimeAfterNewTimeZero = highestFlowData.time
+            }
+
+            // Calculate the time difference between highestFlowTimeAfterNewTimeZero and newTimeZero
+            if let highestFlowTimeAfterNewTimeZero = highestFlowTimeAfterNewTimeZero {
+                highestFlowTimeDifference = highestFlowTimeAfterNewTimeZero - newTimeZero
+                // Check if the time difference exceeds 120ms
+                isFlowTimeExceedsThreshold = highestFlowTimeDifference! > 120.0 // 120 ms directly
+            }
         }
     }
 
@@ -250,8 +315,6 @@ struct ExcelGraphView: View {
         }
     }
 }
-
-
 
 private extension Array {
     subscript(safe index: Int) -> Element? {
