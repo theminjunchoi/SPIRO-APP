@@ -87,26 +87,7 @@ struct ContentView: View {
 }
 
 // 상세 보기 화면
-struct DetailView: View {
-    var item: ExcelData
-    
-    var body: some View {
-        VStack {
-            Text("ID: \(item.id)")
-                .font(.title)
-                .padding()
-            Text("Visit: \(item.visit)")
-                .font(.title2)
-                .padding()
-            Text("Trial: \(item.trial)")
-                .font(.title2)
-                .padding()
-            
-            Spacer()
-        }
-        .navigationTitle("Detail")
-    }
-}
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
