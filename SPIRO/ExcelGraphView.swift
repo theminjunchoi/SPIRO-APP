@@ -187,7 +187,8 @@ struct ExcelGraphView: View {
     }
 
     func loadExcelData(completion: @escaping () -> Void) {
-        guard let fileURL = Bundle.main.url(forResource: "spiro_dataset", withExtension: "xlsx") else {
+        guard let fileURL = Bundle.main.url(forResource: "spiro_dataset",
+            withExtension: "xlsx") else {
             print("File not found")
             return
         }
