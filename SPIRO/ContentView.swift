@@ -2,7 +2,8 @@ import SwiftUI
 import CoreXLSX
 
 // 데이터 모델 정의
-struct ExcelData: Identifiable {
+struct ExcelData {
+    let index: Int
     let id: Int
     let visit: Int
     let trial: Int
@@ -28,16 +29,17 @@ struct ContentView: View {
                 let worksheet = try file.parseWorksheet(at: "xl/worksheets/sheet1.xml")
                 var excelData: [ExcelData] = []
                 
+                var index = 1
                 // 행 데이터를 읽고, excelData 배열에 추가
                 for row in worksheet.data?.rows.dropFirst(1) ?? [] {
-                    print(row)
+                    index += 1
                     if let idString = row.cells[0].value,
                        let vString = row.cells[1].value,
                        let tString = row.cells[2].value,
                        let id = Int(idString),
                        let visit = Int(vString),
                        let trial = Int(tString) {
-                        excelData.append(ExcelData(id: id, visit: visit, trial: trial))
+                        excelData.append(ExcelData(index: index, id: id, visit: visit, trial: trial))
                     }
                 }
                 
@@ -61,15 +63,19 @@ struct ContentView: View {
                     .padding()
 
                 // 데이터 리스트 표시
-                List(data) { item in
-                    HStack {
-                        Text("\(item.id)")  // ID 표시
-                        Spacer()
-                        Text("\(item.visit)")  // V 값 표시
-                        Spacer()
-                        Text("\(item.trial)")  // T 값 표시
+                List(data, id: \.index) { item in
+                    NavigationLink(destination: DetailView(item: item)) {
+                        HStack {
+                            Text("\(item.index-1)")  // Index 표시
+                            Spacer()
+                            Text("\(item.id)")  // ID 표시
+                            Spacer()
+                            Text("\(item.visit)")  // V 값 표시
+                            Spacer()
+                            Text("\(item.trial)")  // T 값 표시
+                        }
+                        .padding()
                     }
-                    .padding()
                 }
             }
             .onAppear {
@@ -77,6 +83,28 @@ struct ContentView: View {
             }
             .navigationTitle("Data List 101 to 110")
         }
+    }
+}
+
+// 상세 보기 화면
+struct DetailView: View {
+    var item: ExcelData
+    
+    var body: some View {
+        VStack {
+            Text("ID: \(item.id)")
+                .font(.title)
+                .padding()
+            Text("Visit: \(item.visit)")
+                .font(.title2)
+                .padding()
+            Text("Trial: \(item.trial)")
+                .font(.title2)
+                .padding()
+            
+            Spacer()
+        }
+        .navigationTitle("Detail")
     }
 }
 
