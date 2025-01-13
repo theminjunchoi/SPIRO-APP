@@ -67,7 +67,6 @@ struct ExcelGraphView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
-                    
 
                     Text("Flow-Volume Graph")
                         .font(.title)
@@ -217,6 +216,7 @@ struct ExcelGraphView: View {
                         parsedData.append(GraphData(time: time, volume: volume, flow: flow))
                     }
                 }
+                
 
                 DispatchQueue.main.async {
                     self.data = parsedData

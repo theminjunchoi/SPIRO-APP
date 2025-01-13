@@ -4,12 +4,13 @@ import CoreXLSX
 // 데이터 모델 정의
 struct ExcelData: Identifiable {
     let id: Int
-    let v: Int
-    let t: Int
+    let visit: Int
+    let trial: Int
 }
 
 struct ContentView: View {
     @State private var data: [ExcelData] = []
+    @State private var rowCount: Int = 0  // 총 읽은 행의 개수를 저장할 변수
     
     // 엑셀 파일을 읽어오는 함수
     func loadExcelData(completion: @escaping () -> Void) {
@@ -24,30 +25,25 @@ struct ContentView: View {
                     return
                 }
                 
-//                guard let sharedStrings = try file.parseSharedStrings() else {
-//                    return
-//                }
-                
-                guard let sheetName = try file.parseWorksheetPaths().first else {
-                    print("No sheets found")
-                    return
-                }
-
-                let worksheet = try file.parseWorksheet(at: sheetName)
+                let worksheet = try file.parseWorksheet(at: "xl/worksheets/sheet1.xml")
                 var excelData: [ExcelData] = []
                 
+                // 행 데이터를 읽고, excelData 배열에 추가
                 for row in worksheet.data?.rows.dropFirst(1) ?? [] {
+                    print(row)
                     if let idString = row.cells[0].value,
                        let vString = row.cells[1].value,
                        let tString = row.cells[2].value,
                        let id = Int(idString),
                        let visit = Int(vString),
                        let trial = Int(tString) {
-                        excelData.append(ExcelData(id: id, v: visit, t: trial))
+                        excelData.append(ExcelData(id: id, visit: visit, trial: trial))
                     }
                 }
+                
                 DispatchQueue.main.async {
                     self.data = excelData
+                    self.rowCount = excelData.count  // 총 행 수를 업데이트
                     completion()
                 }
             } catch {
@@ -58,20 +54,28 @@ struct ContentView: View {
     
     var body: some View {
         NavigationView {
-            List(data) { item in
-                HStack {
-                    Text("\(item.id)")  // ID 표시
-                    Spacer()
-                    Text("\(item.v)")  // V 값 표시
-                    Spacer()
-                    Text("\(item.t)")  // T 값 표시
+            VStack {
+                // 화면 상단에 총 읽은 행의 개수 표시
+                Text("총 \(rowCount)개의 데이터가 있습니다.")
+                    .font(.headline)
+                    .padding()
+
+                // 데이터 리스트 표시
+                List(data) { item in
+                    HStack {
+                        Text("\(item.id)")  // ID 표시
+                        Spacer()
+                        Text("\(item.visit)")  // V 값 표시
+                        Spacer()
+                        Text("\(item.trial)")  // T 값 표시
+                    }
+                    .padding()
                 }
-                .padding()
             }
             .onAppear {
                 loadExcelData{}  // 뷰가 나타날 때 엑셀 데이터를 로드합니다.
             }
-            .navigationTitle("엑셀 데이터")
+            .navigationTitle("Data List 101 to 110")
         }
     }
 }
