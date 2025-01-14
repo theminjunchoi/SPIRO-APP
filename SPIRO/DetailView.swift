@@ -22,7 +22,8 @@ struct DetailView: View {
     @State private var highestFlowTimeDifference: Double? = nil // 최고호기기류도달 시간과 newTimeZero의 차이
     @State private var isFlowTimeExceedsThreshold: Bool = false // 최고호기기류속도 도달 시간이 120ms 초과 여부
     @State private var maxFlowPoint: SpiroData? = nil // Flow의 극대점 저장
-    
+    @State private var positiveSlopePoints: [SpiroData] = [] // Positive slope points after maxFlow
+
     var item: ExcelData
     var body: some View {
         ScrollView(.vertical) {
@@ -44,7 +45,7 @@ struct DetailView: View {
                             Text("Trial: \(item.trial)")
                                 .font(.body)
                         }
-                        
+
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Flow-Volume Graph Current:")
                                 .font(.headline)
@@ -54,7 +55,7 @@ struct DetailView: View {
                             Text("Flow: \(lastData.flow)")
                                 .font(.body)
                         }
-                        
+
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Volume-Time Graph Current:")
                                 .font(.headline)
@@ -92,31 +93,42 @@ struct DetailView: View {
                         )
                         .interpolationMethod(.catmullRom)
 //                        .symbol(Circle())
-                        if let maxFlow = maxFlowPoint {
-                            PointMark(
-                                x: .value("Volume", maxFlow.volume),
-                                y: .value("Flow", maxFlow.flow)
-                            )
-                            .foregroundStyle(Color.red)
-                            .annotation(position: .top) {
-                                Text("Max Flow")
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
-                        }
                         if let ev = evValue, let correspondingFlow = interpolateFlow(at: ev) {
                             PointMark(
                                 x: .value("Volume", ev),
                                 y: .value("Flow", correspondingFlow)
                             )
-                            .foregroundStyle(Color.red)
+                            .foregroundStyle(Color.gray)
                             .annotation(position: .top) {
                                 Text("New Time Zero")
                                     .font(.caption)
-                                    .foregroundColor(.red)
+                                    .foregroundColor(.gray)
                             }
                         }
-
+                        if let maxFlow = maxFlowPoint {
+                            PointMark(
+                                x: .value("Volume", maxFlow.volume),
+                                y: .value("Flow", maxFlow.flow)
+                            )
+                            .foregroundStyle(Color.gray)
+                            .annotation(position: .top) {
+                                Text("Max Flow")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        ForEach(positiveSlopePoints, id: \.volume) { point in
+                            PointMark(
+                                x: .value("Volume", point.volume),
+                                y: .value("Flow", point.flow)
+                            )
+                            .foregroundStyle(Color.red)
+//                            .annotation(position: .top) {
+//                                Text("Positive Slope")
+//                                    .font(.caption)
+//                                    .foregroundColor(.red)
+//                            }
+                        }
                     }
                     // 주석 해제하면 스케일 고정
 //                    .chartXScale(domain: 0...4)
@@ -140,11 +152,11 @@ struct DetailView: View {
                                 x: .value("Time", newTimeZero)
                             )
                             .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 5]))
-                            .foregroundStyle(Color.red)
+                            .foregroundStyle(Color.gray)
                             .annotation(position: .top) {
                                 Text("New Time Zero")
                                     .font(.caption)
-                                    .foregroundColor(.red)
+                                    .foregroundColor(.gray)
                             }
                         }
                     }
@@ -236,6 +248,7 @@ struct DetailView: View {
                 calculateFVCFEV1EVAndTimeZero()
                 animateGraphDrawing()
                 findMaxFlowPoint()
+                checkPositiveSlopeAfterMaxFlow()
             }
         }
     
@@ -377,6 +390,22 @@ struct DetailView: View {
     
     func findMaxFlowPoint() {
         maxFlowPoint = data.max(by: { $0.flow < $1.flow })
+    }
+
+    func checkPositiveSlopeAfterMaxFlow() {
+        guard let maxFlowIndex = data.firstIndex(where: { $0.id == maxFlowPoint?.id }) else { return }
+        positiveSlopePoints = []
+        for i in maxFlowIndex..<(data.count - 1) {
+            let p1 = data[i]
+            let p2 = data[i + 1]
+            if p1.flow <= 0 || p2.flow <= 0 {
+                break
+            }
+            let slope = (p2.flow - p1.flow) / (p2.volume - p1.volume)
+            if slope > 0 {
+                positiveSlopePoints.append(p2)
+            }
+        }
     }
     
     func interpolateFlow(at volume: Double) -> Double? {
