@@ -16,15 +16,17 @@ struct DetailView: View {
     @State private var fev1Value: Double? = nil
     @State private var evValue: Double? = nil
     @State private var newTimeZero: Double? = nil
-    @State private var isEvLessThanThreshold: Bool = false // Track if EV is less than threshold
-    @State private var fvc5PercentValue: Double? = nil // Store the 5% of FVC value
-    @State private var highestFlowTimeAfterNewTimeZero: Double? = nil // newTimeZero 이후 가장 큰 flow를 가진 시간
-    @State private var highestFlowTimeDifference: Double? = nil // 최고호기기류도달 시간과 newTimeZero의 차이
-    @State private var isFlowTimeExceedsThreshold: Bool = false // 최고호기기류속도 도달 시간이 120ms 초과 여부
-    @State private var maxFlowPoint: SpiroData? = nil // Flow의 극대점 저장
-    @State private var positiveSlopePoints: [SpiroData] = [] // Positive slope points after maxFlow
-
+    @State private var isEvLessThanThreshold: Bool = false
+    @State private var fvc5PercentValue: Double? = nil
+    @State private var highestFlowTimeAfterNewTimeZero: Double? = nil
+    @State private var highestFlowTimeDifference: Double? = nil
+    @State private var isFlowTimeExceedsThreshold: Bool = false
+    @State private var maxFlowPoint: SpiroData? = nil
+    @State private var positiveSlopePoints: [SpiroData] = []
+    @State private var isPositiveSlopeVisible: Bool = true // Add this to control visibility of positive slope points
+    
     var item: ExcelData
+    
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 20) {
@@ -45,7 +47,7 @@ struct DetailView: View {
                             Text("Trial: \(item.trial)")
                                 .font(.body)
                         }
-
+                        
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Flow-Volume Graph Current:")
                                 .font(.headline)
@@ -55,7 +57,7 @@ struct DetailView: View {
                             Text("Flow: \(lastData.flow)")
                                 .font(.body)
                         }
-
+                        
                         VStack(alignment: .leading, spacing: 10) {
                             Text("Volume-Time Graph Current:")
                                 .font(.headline)
@@ -66,7 +68,7 @@ struct DetailView: View {
                                 .font(.body)
                         }
                     }
-
+                    
                     VStack(alignment: .leading, spacing: 10) {
                         Text("주요 수치")
                             .font(.headline)
@@ -82,17 +84,28 @@ struct DetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
-
+                    
                     Text("Flow-Volume Graph")
                         .font(.title)
-
+                    
+                    // Add a button to toggle the visibility of positive slope points
+                    Button(action: {
+                        isPositiveSlopeVisible.toggle() // Toggle visibility of positive slope points
+                    }) {
+                        Text(isPositiveSlopeVisible ? "Hide Positive Slope Points" : "Show Positive Slope Points")
+                            .font(.body)
+                            .foregroundColor(.blue)
+                            .padding()
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(8)
+                    }
+                    
                     Chart(animatedData) {
                         LineMark(
                             x: .value("Volume", $0.volume),
                             y: .value("Flow", $0.flow)
                         )
                         .interpolationMethod(.catmullRom)
-//                        .symbol(Circle())
                         if let ev = evValue, let correspondingFlow = interpolateFlow(at: ev) {
                             PointMark(
                                 x: .value("Volume", ev),
@@ -117,36 +130,32 @@ struct DetailView: View {
                                     .foregroundColor(.gray)
                             }
                         }
-                        ForEach(positiveSlopePoints, id: \.volume) { point in
-                            PointMark(
-                                x: .value("Volume", point.volume),
-                                y: .value("Flow", point.flow)
-                            )
-                            .foregroundStyle(Color.red)
-//                            .annotation(position: .top) {
-//                                Text("Positive Slope")
-//                                    .font(.caption)
-//                                    .foregroundColor(.red)
-//                            }
+                        // Add conditional rendering for positive slope points based on `isPositiveSlopeVisible`
+                        if isPositiveSlopeVisible {
+                            ForEach(positiveSlopePoints, id: \.volume) { point in
+                                PointMark(
+                                    x: .value("Volume", point.volume),
+                                    y: .value("Flow", point.flow)
+                                )
+                                .foregroundStyle(Color.red)
+                                .symbolSize(8)
+                            }
                         }
                     }
-                    // 주석 해제하면 스케일 고정
-//                    .chartXScale(domain: 0...4)
-//                    .chartYScale(domain: -5...10)
                     .chartXAxisLabel("Volume")
                     .chartYAxisLabel("Flow")
                     .frame(height: 300)
-
+                                       
+                    
                     Text("Volume-Time Graph")
                         .font(.title)
-
+                    
                     Chart(animatedData) {
                         LineMark(
                             x: .value("Time", $0.time),
                             y: .value("Volume", $0.volume)
                         )
                         .interpolationMethod(.catmullRom)
-//                        .symbol(Circle())
                         if let newTimeZero = newTimeZero {
                             RuleMark(
                                 x: .value("Time", newTimeZero)
@@ -160,13 +169,9 @@ struct DetailView: View {
                             }
                         }
                     }
-                    // 주석 해제하면 스케일 고정
-//                    .chartXScale(domain: 0...15000)
-//                    .chartYScale(domain: 0...4)
                     .chartXAxisLabel("Time")
                     .chartYAxisLabel("Volume")
                     .frame(height: 300)
-                    
                     
                     VStack(alignment: .leading, spacing: 10) {
                         Text("검사 시작 적합 판정")
@@ -178,30 +183,28 @@ struct DetailView: View {
                                 .font(.body)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-
+                        
                         if let timeZero = newTimeZero {
                             Text("New Time Zero: \(timeZero) ms")
                                 .font(.body)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-
-                        // Show FVC 5% value
+                        
                         if let fvc5Percent = fvc5PercentValue {
                             Text("5% of FVC Value: \(fvc5Percent) L")
                                 .font(.body)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         
-                        // Show if EV is less than the threshold
                         if isEvLessThanThreshold {
                             Text("EV값이 threshold(max(FVC 5%, 150 mL)) 보다 작습니다.")
                                 .font(.body)
-                                .foregroundColor(.green) // Green text
+                                .foregroundColor(.green)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         } else {
                             Text("EV값이 threshold(max(FVC 5%, 150 mL))를 초과했습니다.")
                                 .font(.body)
-                                .foregroundColor(.red) // Red text
+                                .foregroundColor(.red)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
@@ -210,22 +213,19 @@ struct DetailView: View {
                         Text("검사 중 적합 판정")
                             .font(.headline)
                             .foregroundColor(.blue)
-
-                        // Display the highest flow time after newTimeZero
+                        
                         if let highestFlowTimeAfterNewTimeZero = highestFlowTimeAfterNewTimeZero {
                             Text("최고호기기류속도 도달 시점: \(highestFlowTimeAfterNewTimeZero) ms")
                                 .font(.body)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-
-                        // Display the time difference from newTimeZero
+                        
                         if let highestFlowTimeDifference = highestFlowTimeDifference {
-                            Text("최고호기기류속도 도달 시간: \(highestFlowTimeDifference) ms") // Already in ms
+                            Text("최고호기기류속도 도달 시간: \(highestFlowTimeDifference) ms")
                                 .font(.body)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-
-                        // Show if the highest flow time difference exceeds 120ms
+                        
                         if isFlowTimeExceedsThreshold {
                             Text("최고호기기류속도 도달 시간이 120ms를 초과합니다.")
                                 .font(.body)
@@ -238,8 +238,8 @@ struct DetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                     }
-                    
                 }
+                    
             }
             .padding()
         }
@@ -251,10 +251,9 @@ struct DetailView: View {
                 checkPositiveSlopeAfterMaxFlow()
             }
         }
-    
         .navigationTitle("Detail")
-        .navigationBarTitleDisplayMode(.inline) // 제목을 인라인으로 표시하여 간격 좁히기
-        .navigationBarBackButtonHidden(false)  // Back 버튼 숨기기
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(false)
     }
     
     func loadExcelData(completion: @escaping () -> Void) {
@@ -392,7 +391,7 @@ struct DetailView: View {
         maxFlowPoint = data.max(by: { $0.flow < $1.flow })
     }
 
-    func checkPositiveSlopeAfterMaxFlow() {
+    func checkPositiveSlopeAfterMaxFlow() { // flow-volume curve에서 기울기가 양수가 되는 시점을 찾는 메소드
         guard let maxFlowIndex = data.firstIndex(where: { $0.id == maxFlowPoint?.id }) else { return }
         positiveSlopePoints = []
         for i in maxFlowIndex..<(data.count - 1) {
