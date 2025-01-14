@@ -90,7 +90,9 @@ struct DetailView: View {
                             y: .value("Flow", $0.flow)
                         )
                         .interpolationMethod(.catmullRom)
-                        .symbol(Circle())
+//                        .symbol(Circle())
+                        
+
                     }
                     // 주석 해제하면 스케일 고정
 //                    .chartXScale(domain: 0...4)
@@ -108,7 +110,14 @@ struct DetailView: View {
                             y: .value("Volume", $0.volume)
                         )
                         .interpolationMethod(.catmullRom)
-                        .symbol(Circle())
+//                        .symbol(Circle())
+                        if let newTimeZero = newTimeZero {
+                            RuleMark(
+                                x: .value("Time", newTimeZero)
+                            )
+                            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 5]))
+                            .foregroundStyle(Color.gray)
+                        }
                     }
                     // 주석 해제하면 스케일 고정
 //                    .chartXScale(domain: 0...15000)
