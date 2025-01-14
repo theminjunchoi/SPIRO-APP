@@ -21,6 +21,7 @@ struct DetailView: View {
     @State private var highestFlowTimeAfterNewTimeZero: Double? = nil // newTimeZero 이후 가장 큰 flow를 가진 시간
     @State private var highestFlowTimeDifference: Double? = nil // 최고호기기류도달 시간과 newTimeZero의 차이
     @State private var isFlowTimeExceedsThreshold: Bool = false // 최고호기기류속도 도달 시간이 120ms 초과 여부
+    @State private var maxFlowPoint: SpiroData? = nil // Flow의 극대점 저장
     
     var item: ExcelData
     var body: some View {
@@ -91,7 +92,30 @@ struct DetailView: View {
                         )
                         .interpolationMethod(.catmullRom)
 //                        .symbol(Circle())
-                        
+                        if let maxFlow = maxFlowPoint {
+                            PointMark(
+                                x: .value("Volume", maxFlow.volume),
+                                y: .value("Flow", maxFlow.flow)
+                            )
+                            .foregroundStyle(Color.red)
+                            .annotation(position: .top) {
+                                Text("Max Flow")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                        if let ev = evValue, let correspondingFlow = interpolateFlow(at: ev) {
+                            PointMark(
+                                x: .value("Volume", ev),
+                                y: .value("Flow", correspondingFlow)
+                            )
+                            .foregroundStyle(Color.red)
+                            .annotation(position: .top) {
+                                Text("New Time Zero")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                        }
 
                     }
                     // 주석 해제하면 스케일 고정
@@ -116,7 +140,12 @@ struct DetailView: View {
                                 x: .value("Time", newTimeZero)
                             )
                             .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 5]))
-                            .foregroundStyle(Color.gray)
+                            .foregroundStyle(Color.red)
+                            .annotation(position: .top) {
+                                Text("New Time Zero")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
                         }
                     }
                     // 주석 해제하면 스케일 고정
@@ -206,6 +235,7 @@ struct DetailView: View {
             loadExcelData {
                 calculateFVCFEV1EVAndTimeZero()
                 animateGraphDrawing()
+                findMaxFlowPoint()
             }
         }
     
@@ -336,11 +366,27 @@ struct DetailView: View {
     }
 
     func animateGraphDrawing() {
-        animatedData = []
-        for (index, point) in data.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) { // Faster animation
-                animatedData.append(point)
-            }
+//        animatedData = []
+//        for (index, point) in data.enumerated() {
+//            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) { // Faster animation
+//                animatedData.append(point)
+//            }
+//        }
+        animatedData = data
+    }
+    
+    func findMaxFlowPoint() {
+        maxFlowPoint = data.max(by: { $0.flow < $1.flow })
+    }
+    
+    func interpolateFlow(at volume: Double) -> Double? {
+        guard let lower = data.last(where: { $0.volume <= volume }),
+              let upper = data.first(where: { $0.volume > volume }),
+              lower.volume != upper.volume else {
+            return nil
         }
+
+        let slope = (upper.flow - lower.flow) / (upper.volume - lower.volume)
+        return lower.flow + slope * (volume - lower.volume)
     }
 }
