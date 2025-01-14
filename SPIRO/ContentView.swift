@@ -55,34 +55,32 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack {
-                // 화면 상단에 총 읽은 행의 개수 표시
-                Text("총 \(rowCount)개의 데이터가 있습니다.")
-                    .font(.headline)
-                    .padding()
+        VStack {
+            // 화면 상단에 총 읽은 행의 개수 표시
+            Text("총 \(rowCount)개의 데이터가 있습니다.")
+                .font(.headline)
+                .padding()
 
-                // 데이터 리스트 표시
-                List(data, id: \.index) { item in
-                    NavigationLink(destination: DetailView(item: item)) {
-                        HStack {
-                            Text("\(item.index-1)")  // Index 표시
-                            Spacer()
-                            Text("\(item.id)")  // ID 표시
-                            Spacer()
-                            Text("\(item.visit)")  // V 값 표시
-                            Spacer()
-                            Text("\(item.trial)")  // T 값 표시
-                        }
-                        .padding()
+            // 데이터 리스트 표시
+            List(data, id: \.index) { item in
+                NavigationLink(destination: DetailView(item: item)) {
+                    HStack {
+                        Text("\(item.index-1)")  // Index 표시
+                        Spacer()
+                        Text("\(item.id)")  // ID 표시
+                        Spacer()
+                        Text("\(item.visit)")  // V 값 표시
+                        Spacer()
+                        Text("\(item.trial)")  // T 값 표시
                     }
+                    .padding()
                 }
             }
-            .onAppear {
-                loadExcelData{}  // 뷰가 나타날 때 엑셀 데이터를 로드합니다.
-            }
-            .navigationTitle("Data List 101 to 110")
         }
+        .onAppear {
+            loadExcelData{}  // 뷰가 나타날 때 엑셀 데이터를 로드합니다.
+        }
+        .navigationTitle("Data List 101 to 110")
     }
 }
 
