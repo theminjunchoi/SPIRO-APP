@@ -23,8 +23,9 @@ struct DetailView: View {
     @State private var isFlowTimeExceedsThreshold: Bool = false
     @State private var maxFlowPoint: SpiroData? = nil
     @State private var positiveSlopePoints: [SpiroData] = []
-    @State private var isPositiveSlopeVisible: Bool = true // Add this to control visibility of positive slope points
+    @State private var isPointVisible: Bool = true // Add this to control visibility of positive slope points
     @State private var flowTransitionPoints: [SpiroData] = [] // New state variable to store transition points
+    @State private var flowTransitionPointsPurple: [SpiroData] = [] // New state variable for purple transition points
     
     var item: ExcelData
     
@@ -89,11 +90,36 @@ struct DetailView: View {
                     Text("Flow-Volume Graph")
                         .font(.title)
                     
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 5) {
+                            Text("기울기가 갑자기 증가하는 경우:")
+                                .font(.body)
+                            Text("빨간색")
+                                .font(.body)
+                                .foregroundColor(.red)
+                        }
+                        HStack(spacing: 5) {
+                            Text("흡기 타이밍:")
+                                .font(.body)
+                            Text("초록색")
+                                .font(.body)
+                                .foregroundColor(.green)
+                        }
+                        HStack(spacing: 5) {
+                            Text("호기 타이밍:")
+                                .font(.body)
+                            Text("노란색")
+                                .font(.body)
+                                .foregroundColor(.yellow)
+                        }
+                    }
+                    
+                    
                     // Add a button to toggle the visibility of positive slope points
                     Button(action: {
-                        isPositiveSlopeVisible.toggle() // Toggle visibility of positive slope points
+                        isPointVisible.toggle() // Toggle visibility of positive slope points
                     }) {
-                        Text(isPositiveSlopeVisible ? "Hide Positive Slope Points" : "Show Positive Slope Points")
+                        Text(isPointVisible ? "Hide Points" : "Show Points")
                             .font(.body)
                             .foregroundColor(.blue)
                             .padding()
@@ -132,25 +158,36 @@ struct DetailView: View {
                             }
                         }
                         // Add conditional rendering for positive slope points based on isPositiveSlopeVisible
-                        if isPositiveSlopeVisible {
+                        if isPointVisible {
                             ForEach(positiveSlopePoints, id: \.volume) { point in
                                 PointMark(
                                     x: .value("Volume", point.volume),
                                     y: .value("Flow", point.flow)
                                 )
                                 .foregroundStyle(Color.red)
-                                .symbolSize(10)
+                                .symbolSize(15)
                             }
                         }
-                        
-                        // Render Flow transition points
-                        ForEach(flowTransitionPoints, id: \.time) { point in
-                            PointMark(
-                                x: .value("Volume", point.volume),
-                                y: .value("Flow", point.flow)
-                            )
-                            .foregroundStyle(Color.green) // Green for flow > 0.1 and dropping
-                            .symbolSize(10)
+                        if isPointVisible {
+                            // Render Flow transition points (green)
+                            ForEach(flowTransitionPoints, id: \.time) { point in
+                                PointMark(
+                                    x: .value("Volume", point.volume),
+                                    y: .value("Flow", point.flow)
+                                )
+                                .foregroundStyle(Color.green) // Green for flow > 0.1 and dropping
+                                .symbolSize(15)
+                            }
+                            
+                            // Render Flow transition points (yellow)
+                            ForEach(flowTransitionPointsPurple, id: \.time) { point in
+                                PointMark(
+                                    x: .value("Volume", point.volume),
+                                    y: .value("Flow", point.flow)
+                                )
+                                .foregroundStyle(Color.yellow) // Yellow for flow < -0.1 and rising
+                                .symbolSize(15)
+                            }
                         }
                     }
                     .chartXAxisLabel("Volume")
@@ -313,6 +350,7 @@ struct DetailView: View {
     // Function to check for flow transitions
     func checkFlowTransition() {
         flowTransitionPoints = []
+        flowTransitionPointsPurple = []
         guard let newTimeZero = newTimeZero else { return }
 
         // Only check for flow transitions before the newTimeZero
@@ -322,9 +360,14 @@ struct DetailView: View {
             let prev = preNewTimeZeroData[i - 1]
             let current = preNewTimeZeroData[i]
             
-            // Check for Flow > 0.1 and decreasing
+            // Check for Flow > 0.1 and decreasing (green)
             if prev.flow >= 0.1 && current.flow < 0.1 {
                 flowTransitionPoints.append(current) // Green point
+            }
+            
+            // Check for Flow < -0.1 and increasing (purple)
+            if prev.flow <= -0.1 && current.flow > -0.1 {
+                flowTransitionPointsPurple.append(current) // Purple point
             }
         }
     }
