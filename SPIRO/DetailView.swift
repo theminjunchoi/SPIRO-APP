@@ -24,6 +24,7 @@ struct DetailView: View {
     @State private var maxFlowPoint: SpiroData? = nil
     @State private var positiveSlopePoints: [SpiroData] = []
     @State private var isPositiveSlopeVisible: Bool = true // Add this to control visibility of positive slope points
+    @State private var flowTransitionPoints: [SpiroData] = [] // New state variable to store transition points
     
     var item: ExcelData
     
@@ -130,7 +131,7 @@ struct DetailView: View {
                                     .foregroundColor(.gray)
                             }
                         }
-                        // Add conditional rendering for positive slope points based on `isPositiveSlopeVisible`
+                        // Add conditional rendering for positive slope points based on isPositiveSlopeVisible
                         if isPositiveSlopeVisible {
                             ForEach(positiveSlopePoints, id: \.volume) { point in
                                 PointMark(
@@ -138,8 +139,18 @@ struct DetailView: View {
                                     y: .value("Flow", point.flow)
                                 )
                                 .foregroundStyle(Color.red)
-                                .symbolSize(8)
+                                .symbolSize(10)
                             }
+                        }
+                        
+                        // Render Flow transition points
+                        ForEach(flowTransitionPoints, id: \.time) { point in
+                            PointMark(
+                                x: .value("Volume", point.volume),
+                                y: .value("Flow", point.flow)
+                            )
+                            .foregroundStyle(Color.green) // Green for flow > 0.1 and dropping
+                            .symbolSize(10)
                         }
                     }
                     .chartXAxisLabel("Volume")
@@ -249,6 +260,7 @@ struct DetailView: View {
                 animateGraphDrawing()
                 findMaxFlowPoint()
                 checkPositiveSlopeAfterMaxFlow()
+                checkFlowTransition() // Call the new function to check for flow transitions
             }
         }
         .navigationTitle("Detail")
@@ -298,6 +310,25 @@ struct DetailView: View {
         }
     }
 
+    // Function to check for flow transitions
+    func checkFlowTransition() {
+        flowTransitionPoints = []
+        guard let newTimeZero = newTimeZero else { return }
+
+        // Only check for flow transitions before the newTimeZero
+        let preNewTimeZeroData = data.filter { $0.time < newTimeZero }
+        
+        for i in 1..<preNewTimeZeroData.count {
+            let prev = preNewTimeZeroData[i - 1]
+            let current = preNewTimeZeroData[i]
+            
+            // Check for Flow > 0.1 and decreasing
+            if prev.flow >= 0.1 && current.flow < 0.1 {
+                flowTransitionPoints.append(current) // Green point
+            }
+        }
+    }
+    
     func calculateFVCFEV1EVAndTimeZero() {
         // Calculate the maximum volume value as FVC
         fvcValue = data.map { $0.volume }.max()
@@ -378,12 +409,15 @@ struct DetailView: View {
     }
 
     func animateGraphDrawing() {
+        // 에니메이션 사용시에 아래 코드
 //        animatedData = []
 //        for (index, point) in data.enumerated() {
 //            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) { // Faster animation
 //                animatedData.append(point)
 //            }
 //        }
+        
+        // 에니메이션 필요 없을 시에 아래 코드
         animatedData = data
     }
     
