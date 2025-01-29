@@ -60,7 +60,7 @@ struct ContentView: View {
             Text("총 \(rowCount)개의 데이터가 있습니다.")
                 .font(.headline)
                 .padding()
-
+            
             // 데이터 리스트 표시
             List(data, id: \.index) { item in
                 NavigationLink(destination: DetailView(item: item)) {

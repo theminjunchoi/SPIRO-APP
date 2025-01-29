@@ -471,9 +471,9 @@ struct DetailView: View {
     func checkPositiveSlopeAfterMaxFlow() { // flow-volume curve에서 기울기가 양수가 되는 시점을 찾는 메소드
         guard let maxFlowIndex = data.firstIndex(where: { $0.id == maxFlowPoint?.id }) else { return }
         positiveSlopePoints = []
-        for i in maxFlowIndex..<(data.count - 1) {
+        for i in maxFlowIndex..<(data.count - 10) {
             let p1 = data[i]
-            let p2 = data[i + 1]
+            let p2 = data[i + 10]
             if p1.flow <= 0 || p2.flow <= 0 {
                 break
             }
