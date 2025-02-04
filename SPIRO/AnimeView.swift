@@ -48,12 +48,18 @@ struct AnimeView: View {
                     // 여기에 flow 값에 맞춰 원의 크기를 그려주는 부분을 추가
                     if let lastData = animatedData.last {
                         // flow 값이 음수일 경우 0으로 설정하고, 양수일 경우 기존 방식대로 크기를 계산
-                        let flowValue = max(CGFloat(lastData.flow) * 30 + 70, 10)
-                        Circle()
-                            .fill(Color.blue)
-                            .frame(width: flowValue, height: flowValue)
-                            .padding(.top, 20)
-                            .padding(.bottom, 20)
+                        let flowValue = max(CGFloat(lastData.flow) * 30 + 100, 10)
+                        
+                        // 원을 가운데 정렬하기 위해 Spacer()를 사용
+                        HStack {
+                            Spacer()
+                            Circle()
+                                .fill(Color.blue)
+                                .frame(width: flowValue, height: flowValue)
+                                .padding(.top, 20)
+                            Spacer()
+                        }
+                        .frame(height: 300)
                     }
                     
                     Text("Flow-Volume Graph")
