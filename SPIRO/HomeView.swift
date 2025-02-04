@@ -14,6 +14,16 @@ struct HomeView: View {
                         .cornerRadius(10)
                 }
                 
+                NavigationLink(destination: VisualizeView()) {
+                    Text("Data visualizing Viewer")
+                        .font(.title2)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                
                 NavigationLink(destination: MagneticGraphView()) {
                     Text("Graphs with Magnetometer")
                         .font(.title2)
