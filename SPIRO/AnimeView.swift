@@ -26,6 +26,9 @@ struct AnimeView: View {
     
     var item: VisualData
     
+    @State private var showText = false
+    @State private var displayedText = ""
+    
     var body: some View {
         ScrollView(.vertical) {
             VStack(alignment: .leading, spacing: 20) {
@@ -71,7 +74,51 @@ struct AnimeView: View {
                         }
                         .frame(height: 300)
                     }
+                    // exhaleToInhale 시점에 "들이마시세요!" 표시
+                    ForEach(exhaleToInhale, id: \.id) { point in
+                        GeometryReader { geometry in
+                            Text("들이마시세요!")
+                                .foregroundColor(.green)
+                                .position(x: geometry.size.width * CGFloat(point.time) / CGFloat(animatedData.last?.time ?? 1), y: geometry.size.height - 40)
+                                .opacity(showText ? 1 : 0)
+                                .onAppear {
+                                    if !showText {
+                                        withAnimation(.easeInOut(duration: 3)) {
+                                            displayedText = "들이마시세요!"
+                                            showText = true
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                            withAnimation(.easeInOut(duration: 3)) {
+                                                showText = false
+                                            }
+                                        }
+                                    }
+                                }
+                        }
+                    }
                     
+                    // inhaleToExhale 시점에 "내쉬세요!" 표시
+                    ForEach(inhaleToExhale, id: \.id) { point in
+                        GeometryReader { geometry in
+                            Text("내쉬세요!")
+                                .foregroundColor(.yellow)
+                                .position(x: geometry.size.width * CGFloat(point.time) / CGFloat(animatedData.last?.time ?? 1), y: geometry.size.height - 40)
+                                .opacity(showText ? 1 : 0)
+                                .onAppear {
+                                    if !showText {
+                                        withAnimation(.easeInOut(duration: 3)) {
+                                            displayedText = "내쉬세요!"
+                                            showText = true
+                                        }
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                            withAnimation(.easeInOut(duration: 3)) {
+                                                showText = false
+                                            }
+                                        }
+                                    }
+                                }
+                        }
+                    }
                     
                     
                     Text("Flow-Volume Graph")
