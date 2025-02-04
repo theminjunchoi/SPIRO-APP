@@ -45,6 +45,16 @@ struct AnimeView: View {
                         }
                     }
                     
+                    // 여기에 flow 값에 맞춰 원의 크기를 그려주는 부분을 추가
+                    if let lastData = animatedData.last {
+                        // flow 값이 음수일 경우 0으로 설정하고, 양수일 경우 기존 방식대로 크기를 계산
+                        let flowValue = max(CGFloat(lastData.flow) * 30 + 70, 10)
+                        Circle()
+                            .fill(Color.blue)
+                            .frame(width: flowValue, height: flowValue)
+                            .padding(.top, 20)
+                            .padding(.bottom, 20)
+                    }
                     
                     Text("Flow-Volume Graph")
                         .font(.title)
@@ -61,7 +71,6 @@ struct AnimeView: View {
                     .chartXAxisLabel("Volume")
                     .chartYAxisLabel("Flow")
                     .frame(height: 300)
-                                       
                     
                     Text("Volume-Time Graph")
                         .font(.title)
@@ -78,7 +87,6 @@ struct AnimeView: View {
                     .chartXAxisLabel("Time")
                     .chartYAxisLabel("Volume")
                     .frame(height: 300)
-                    
                 }
                     
             }
