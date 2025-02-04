@@ -12,20 +12,6 @@ struct AnimeData: Identifiable{
 struct AnimeView: View {
     @State private var data: [AnimeData] = []
     @State private var animatedData: [AnimeData] = []
-    @State private var fvcValue: Double? = nil
-    @State private var fev1Value: Double? = nil
-    @State private var evValue: Double? = nil
-    @State private var newTimeZero: Double? = nil
-    @State private var isEvLessThanThreshold: Bool = false
-    @State private var fvc5PercentValue: Double? = nil
-    @State private var highestFlowTimeAfterNewTimeZero: Double? = nil
-    @State private var highestFlowTimeDifference: Double? = nil
-    @State private var isFlowTimeExceedsThreshold: Bool = false
-    @State private var maxFlowPoint: AnimeData? = nil
-    @State private var positiveSlopePoints: [AnimeData] = []
-    @State private var isPointVisible: Bool = true // Add this to control visibility of positive slope points
-    @State private var flowTransitionPoints: [AnimeData] = [] // New state variable to store transition points
-    @State private var flowTransitionPointsPurple: [AnimeData] = [] // New state variable for purple transition points
     
     var item: VisualData
     
@@ -59,6 +45,7 @@ struct AnimeView: View {
                         }
                     }
                     
+                    
                     Text("Flow-Volume Graph")
                         .font(.title)
                     
@@ -69,6 +56,8 @@ struct AnimeView: View {
                         )
                         .interpolationMethod(.catmullRom)
                     }
+                    .chartXScale(domain: 0...4)
+                    .chartYScale(domain: -5...10)
                     .chartXAxisLabel("Volume")
                     .chartYAxisLabel("Flow")
                     .frame(height: 300)
@@ -84,6 +73,8 @@ struct AnimeView: View {
                         )
                         .interpolationMethod(.catmullRom)
                     }
+                    .chartXScale(domain: 0...15000)
+                    .chartYScale(domain: 0...4)
                     .chartXAxisLabel("Time")
                     .chartYAxisLabel("Volume")
                     .frame(height: 300)
