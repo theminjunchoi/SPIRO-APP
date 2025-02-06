@@ -83,12 +83,12 @@ struct AnimeView: View {
                                 .opacity(showText ? 1 : 0)
                                 .onAppear {
                                     if !showText {
-                                        withAnimation(.easeInOut(duration: 3)) {
+                                        withAnimation(.easeInOut(duration: 5)) {
                                             displayedText = "들이마시세요!"
                                             showText = true
                                         }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                            withAnimation(.easeInOut(duration: 3)) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                                            withAnimation(.easeInOut(duration: 5)) {
                                                 showText = false
                                             }
                                         }
@@ -106,12 +106,12 @@ struct AnimeView: View {
                                 .opacity(showText ? 1 : 0)
                                 .onAppear {
                                     if !showText {
-                                        withAnimation(.easeInOut(duration: 3)) {
+                                        withAnimation(.easeInOut(duration: 5)) {
                                             displayedText = "내쉬세요!"
                                             showText = true
                                         }
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                                            withAnimation(.easeInOut(duration: 3)) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                                            withAnimation(.easeInOut(duration: 5)) {
                                                 showText = false
                                             }
                                         }
@@ -236,7 +236,7 @@ struct AnimeView: View {
         // 에니메이션 사용시에 아래 코드
         animatedData = []
         for (index, point) in data.enumerated() {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.01) { // Faster animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(index) * 0.02) { // Faster animation
                 animatedData.append(point)
             }
         }

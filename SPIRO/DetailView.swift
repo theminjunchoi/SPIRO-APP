@@ -474,8 +474,11 @@ struct DetailView: View {
         for i in maxFlowIndex..<(data.count - 1) {
             let p1 = data[i]
             let p2 = data[i + 1]
-            if p1.flow <= 0 || p2.flow <= 0 {
-                break
+//            if p1.flow <= 0 || p2.flow <= 0 {
+//                break
+//            }
+            if p2.flow - p1.flow <= 0.03 || p2.flow <= 0 {
+                continue
             }
             let slope = (p2.flow - p1.flow) / (p2.volume - p1.volume)
             if slope > 0 {
